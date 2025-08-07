@@ -334,115 +334,115 @@
         </div>
     </div>
 
-    <script>
-        class ChatApp {
-            constructor() {
-                this.chatMessages = document.getElementById('chatMessages');
-                this.messageInput = document.getElementById('messageInput');
-                this.sendButton = document.getElementById('sendButton');
-                this.modelSelect = document.getElementById('modelSelect');
-                this.typingIndicator = document.getElementById('typingIndicator');
-                this.statusIndicator = document.getElementById('statusIndicator');
+<script>
+    class ChatApp {
+        constructor() {
+            this.chatMessages = document.getElementById('chatMessages');
+            this.messageInput = document.getElementById('messageInput');
+            this.sendButton = document.getElementById('sendButton');
+            this.modelSelect = document.getElementById('modelSelect');
+            this.typingIndicator = document.getElementById('typingIndicator');
+            this.statusIndicator = document.getElementById('statusIndicator');
+            
+            this.puterAvailable = false;
+            this.setupInitialMessage();
+            this.initializeEventListeners();
+            this.setupTextareaResize();
+            this.checkPuterStatus();
+        }
+
+        setupInitialMessage() {
+            this.addMessage(
+                `Welcome to the Claude Chat Demo!\n\n` +
+                `This app demonstrates how to integrate with the Puter.com AI API to access both Claude Sonnet 4 and Claude Opus 4 models.\n\n` +
+                `🔄 Status: Checking Puter API availability...\n\n` +
+                `If the Puter API loads successfully, you'll be able to chat with Claude directly. ` +
+                `Otherwise, you can still type messages and use this as a template for your own environment.`,
+                false, 
+                'System'
+            );
+        }
+
+        async checkPuterStatus() {
+            let attempts = 0;
+            const maxAttempts = 50; // 5 seconds
+
+            const checkLoop = () => {
+                attempts++;
                 
-                this.puterAvailable = false;
-                this.setupInitialMessage();
-                this.initializeEventListeners();
-                this.setupTextareaResize();
-                this.checkPuterStatus();
-            }
-
-            setupInitialMessage() {
-                this.addMessage(
-                    `Welcome to the Claude Chat Demo!\n\n` +
-                    `This app demonstrates how to integrate with the Puter.com AI API to access both Claude Sonnet 4 and Claude Opus 4 models.\n\n` +
-                    `🔄 Status: Checking Puter API availability...\n\n` +
-                    `If the Puter API loads successfully, you'll be able to chat with Claude directly. ` +
-                    `Otherwise, you can still type messages and use this as a template for your own environment.`,
-                    false, 
-                    'System'
-                );
-            }
-
-            async checkPuterStatus() {
-                let attempts = 0;
-                const maxAttempts = 50; // 5 seconds
-
-                const checkLoop = () => {
-                    attempts++;
-                    
-                    if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
-                        this.handlePuterSuccess();
-                    } else if (attempts >= maxAttempts) {
-                        this.handlePuterFailure();
-                    } else {
-                        setTimeout(checkLoop, 100);
-                    }
-                };
-
-                checkLoop();
-            }
-
-            handlePuterSuccess() {
-                console.log('✅ Puter API loaded successfully!', puter);
-                this.puterAvailable = true;
-                
-                this.statusIndicator.textContent = '✅ Connected to Puter API';
-                this.statusIndicator.className = 'status-indicator connected';
-                
-                this.addInfoMessage(
-                    `🎉 Great! The Puter API has loaded successfully.\n\n` +
-                    `You can now chat with Claude using either:\n` +
-                    `• Claude Sonnet 4 (efficient, everyday use)\n` +
-                    `• Claude Opus 4 (most capable model)\n\n` +
-                    `Try asking me anything!`
-                );
-
-                this.testAPI();
-            }
-
-            handlePuterFailure() {
-                this.statusIndicator.textContent = '❌ Puter API unavailable';
-                this.statusIndicator.className = 'status-indicator failed';
-                
-                this.addErrorMessage(
-                    `⚠️ The Puter API couldn't be loaded. This could be due to:\n\n` +
-                    `• Network restrictions or firewall blocking js.puter.com\n` +
-                    `• CORS policy preventing the script from loading\n` +
-                    `• The Puter service being temporarily unavailable\n\n` +
-                    `📋 To use this code in your own environment:\n\n` +
-                    `1. Copy the HTML code\n` +
-                    `2. Save it as an .html file\n` +
-                    `3. Open it from a local web server or hosting service\n` +
-                    `4. Ensure js.puter.com is accessible from your network\n\n` +
-                    `The code structure below shows how to integrate with the Puter API:`
-                );
-
-                this.showImplementationCode();
-            }
-
-            async testAPI() {
-                try {
-                    const testResponse = await puter.ai.chat("Hello! Just testing the connection.", {
-                        model: "claude-sonnet-4"
-                    });
-                    
-                    console.log('✅ API test successful:', testResponse);
-                    console.log('✅ Test response type:', typeof testResponse);
-                    console.log('Response keys:', Object.keys(testResponse));
-                    
-                } catch (error) {
-                    console.error('❌ API test failed:', error);
-                    this.addErrorMessage(
-                        `The Puter API loaded but returned an error during testing:\n\n` +
-                        `${error.message}\n\n` +
-                        `This might be due to API key issues or service limitations. ` +
-                        `You can still try sending messages - the error might be temporary.`
-                    );
+                if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
+                    this.handlePuterSuccess();
+                } else if (attempts >= maxAttempts) {
+                    this.handlePuterFailure();
+                } else {
+                    setTimeout(checkLoop, 100);
                 }
-            }
+            };
 
-            showImplementationCode() {
-                const codeExample = `// Basic Puter AI integration example:
+            checkLoop();
+        }
+
+        handlePuterSuccess() {
+            console.log('✅ Puter API loaded successfully!', puter);
+            this.puterAvailable = true;
+            
+            this.statusIndicator.textContent = '✅ Connected to Puter API';
+            this.statusIndicator.className = 'status-indicator connected';
+            
+            this.addInfoMessage(
+                `🎉 Great! The Puter API has loaded successfully.\n\n` +
+                `You can now chat with Claude using either:\n` +
+                `• Claude Sonnet 4 (efficient, everyday use)\n` +
+                `• Claude Opus 4 (most capable model)\n\n` +
+                `Try asking me anything!`
+            );
+
+            this.testAPI();
+        }
+
+        handlePuterFailure() {
+            this.statusIndicator.textContent = '❌ Puter API unavailable';
+            this.statusIndicator.className = 'status-indicator failed';
+            
+            this.addErrorMessage(
+                `⚠️ The Puter API couldn't be loaded. This could be due to:\n\n` +
+                `• Network restrictions or firewall blocking js.puter.com\n` +
+                `• CORS policy preventing the script from loading\n` +
+                `• The Puter service being temporarily unavailable\n\n` +
+                `📋 To use this code in your own environment:\n\n` +
+                `1. Copy the HTML code\n` +
+                `2. Save it as an .html file\n` +
+                `3. Open it from a local web server or hosting service\n` +
+                `4. Ensure js.puter.com is accessible from your network\n\n` +
+                `The code structure below shows how to integrate with the Puter API:`
+            );
+
+            this.showImplementationCode();
+        }
+
+        async testAPI() {
+            try {
+                const testResponse = await puter.ai.chat("Hello! Just testing the connection.", {
+                    model: "claude-sonnet-4"
+                });
+                
+                console.log('✅ API test successful:', testResponse);
+                console.log('✅ Test response type:', typeof testResponse);
+                console.log('Response keys:', Object.keys(testResponse));
+                
+            } catch (error) {
+                console.error('❌ API test failed:', error);
+                this.addErrorMessage(
+                    `The Puter API loaded but returned an error during testing:\n\n` +
+                    `${error.message}\n\n` +
+                    `This might be due to API key issues or service limitations. ` +
+                    `You can still try sending messages - the error might be temporary.`
+                );
+            }
+        }
+
+        showImplementationCode() {
+            const codeExample = `// Basic Puter AI integration example:
 
 // Using Claude Sonnet 4
 puter.ai.chat("Your message here", {
@@ -469,190 +469,196 @@ async function chatWithClaude(message, model = "claude-sonnet-4") {
     }
 }`;
 
-                const codeDiv = document.createElement('div');
-                codeDiv.className = 'demo-code';
-                codeDiv.textContent = codeExample;
-                
-                this.chatMessages.appendChild(codeDiv);
-                this.scrollToBottom();
-            }
-
-            initializeEventListeners() {
-                this.sendButton.addEventListener('click', () => this.sendMessage());
-                
-                this.messageInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        this.sendMessage();
-                    }
-                });
-
-                this.messageInput.addEventListener('input', () => {
-                    this.updateSendButton();
-                });
-            }
-
-            setupTextareaResize() {
-                this.messageInput.addEventListener('input', () => {
-                    this.messageInput.style.height = 'auto';
-                    this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
-                });
-            }
-
-            updateSendButton() {
-                const hasContent = this.messageInput.value.trim().length > 0;
-                this.sendButton.disabled = !hasContent;
-            }
-
-            addMessage(content, isUser = false, model = null) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'message-content';
-                
-                if (!isUser && model) {
-                    const badge = document.createElement('div');
-                    badge.className = 'model-badge';
-                    badge.textContent = model;
-                    contentDiv.appendChild(badge);
-                }
-                
-                let textContent;
-                try {
-                    if (typeof content === 'string') {
-                        textContent = content;
-                    } else if (content === null || content === undefined) {
-                        textContent = '[No response received]';
-                    } else if (typeof content === 'object') {
-                        if (content.message) {
-                            textContent = content.message;
-                        } else if (content.text) {
-                            textContent = content.text;
-                        } else if (content.content) {
-                            textContent = content.content;
-                        } else {
-                            try {
-                                textContent = JSON.stringify(content, null, 2);
-                            } catch (e) {
-                                textContent = '[Error: Unable to serialize response object]';
-                                console.error('Serialization error:', e, 'Response object:', content);
-                            }
-                        }
-                    } else {
-                        textContent = String(content);
-                    }
-                } catch (e) {
-                    textContent = '[Error processing response]';
-                    console.error('Error in addMessage:', e, 'Original content:', content);
-                }
-                
-                const textNode = document.createTextNode(textContent);
-                contentDiv.appendChild(textNode);
-                
-                messageDiv.appendChild(contentDiv);
-                this.chatMessages.appendChild(messageDiv);
-                
-                this.scrollToBottom();
-            }
-
-            addErrorMessage(content) {
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'error-message';
-                errorDiv.textContent = content;
-                this.chatMessages.appendChild(errorDiv);
-                this.scrollToBottom();
-            }
-
-            addInfoMessage(content) {
-                const infoDiv = document.createElement('div');
-                infoDiv.className = 'info-message';
-                infoDiv.textContent = content;
-                this.chatMessages.appendChild(infoDiv);
-                this.scrollToBottom();
-            }
-
-            showTypingIndicator() {
-                this.typingIndicator.style.display = 'block';
-                this.scrollToBottom();
-            }
-
-            hideTypingIndicator() {
-                this.typingIndicator.style.display = 'none';
-            }
-
-            scrollToBottom() {
-                setTimeout(() => {
-                    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-                }, 100);
-            }
-
-            async sendMessage() {
-                const message = this.messageInput.value.trim();
-                if (!message) return;
-
-                const selectedModel = this.modelSelect.value;
-                
-                this.addMessage(message, true);
-                
-                this.messageInput.value = '';
-                this.messageInput.style.height = 'auto';
-                this.updateSendButton();
-                
-                if (!this.puterAvailable) {
-                    this.addErrorMessage('Puter API is not available. Please ensure js.puter.com is accessible and try again.');
-                    return;
-                }
-                
-                this.showTypingIndicator();
-                this.sendButton.disabled = true;
-
-                try {
-                    console.log(`🚀 Sending to ${selectedModel}:`, message);
-                    
-                    const response = await puter.ai.chat(message, {
-                        model: selectedModel
-                    });
-                    
-                    console.log(`✅ Raw response from ${selectedModel}:`, response);
-                    console.log(`✅ Response type:`, typeof response);
-                    console.log(`✅ Response structure:`, JSON.stringify(response, null, 2));
-                    
-                    this.hideTypingIndicator();
-                    this.addMessage(response, false, selectedModel);
-                    
-                } catch (error) {
-                    this.hideTypingIndicator();
-                    console.error('❌ Error details:', error);
-                    
-                    let errorMessage = 'Sorry, there was an error processing your request:\n\n';
-                    
-                    if (error.message) {
-                        if (error.message.includes('fetch') || error.message.includes('network')) {
-                            errorMessage += 'Network error - please check your connection and try again.';
-                        } else if (error.message.includes('unauthorized') || error.message.includes('403')) {
-                            errorMessage += 'API access denied - this might be due to API key or permission issues.';
-                        } else if (error.message.includes('rate limit') || error.message.includes('429')) {
-                            errorMessage += 'Rate limit exceeded - please wait a moment before trying again.';
-                        } else {
-                            errorMessage += error.message;
-                        }
-                    } else {
-                        errorMessage += 'Unknown error occurred. Please try again.';
-                    }
-                    
-                    this.addErrorMessage(errorMessage);
-                } finally {
-                    this.sendButton.disabled = false;
-                    this.updateSendButton();
-                    this.messageInput.focus();
-                }
-            }
+            const codeDiv = document.createElement('div');
+            codeDiv.className = 'demo-code';
+            codeDiv.textContent = codeExample;
+            
+            this.chatMessages.appendChild(codeDiv);
+            this.scrollToBottom();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            new ChatApp();
-        });
-    </script>
+        initializeEventListeners() {
+            this.sendButton.addEventListener('click', () => this.sendMessage());
+            
+            this.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+
+            this.messageInput.addEventListener('input', () => {
+                this.updateSendButton();
+            });
+        }
+
+        setupTextareaResize() {
+            this.messageInput.addEventListener('input', () => {
+                this.messageInput.style.height = 'auto';
+                this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+            });
+        }
+
+        updateSendButton() {
+            const hasContent = this.messageInput.value.trim().length > 0;
+            this.sendButton.disabled = !hasContent;
+        }
+
+        addMessage(content, isUser = false, model = null) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (!isUser && model) {
+                const badge = document.createElement('div');
+                badge.className = 'model-badge';
+                badge.textContent = model;
+                contentDiv.appendChild(badge);
+            }
+            
+            let textContent;
+            try {
+                if (typeof content === 'string') {
+                    textContent = content;
+                } else if (content === null || content === undefined) {
+                    textContent = '[No response received]';
+                } else if (typeof content === 'object') {
+                    // Enhanced property checking
+                    if (content.message) {
+                        textContent = content.message;
+                    } else if (content.text) {
+                        textContent = content.text;
+                    } else if (content.content) {
+                        textContent = content.content;
+                    } else if (content.reply) { // Added common alternative property
+                        textContent = content.reply;
+                    } else if (content.response) { // Added another potential property
+                        textContent = content.response;
+                    } else {
+                        try {
+                            textContent = JSON.stringify(content, null, 2);
+                        } catch (e) {
+                            textContent = '[Error: Unable to serialize response object]';
+                            console.error('Serialization error:', e, 'Response object:', content);
+                        }
+                    }
+                } else {
+                    textContent = String(content);
+                }
+            } catch (e) {
+                textContent = '[Error processing response]';
+                console.error('Error in addMessage:', e, 'Original content:', content);
+            }
+            
+            const textNode = document.createTextNode(textContent);
+            contentDiv.appendChild(textNode);
+            
+            messageDiv.appendChild(contentDiv);
+            this.chatMessages.appendChild(messageDiv);
+            
+            this.scrollToBottom();
+        }
+
+        addErrorMessage(content) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = content;
+            this.chatMessages.appendChild(errorDiv);
+            this.scrollToBottom();
+        }
+
+        addInfoMessage(content) {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'info-message';
+            infoDiv.textContent = content;
+            this.chatMessages.appendChild(infoDiv);
+            this.scrollToBottom();
+        }
+
+        showTypingIndicator() {
+            this.typingIndicator.style.display = 'block';
+            this.scrollToBottom();
+        }
+
+        hideTypingIndicator() {
+            this.typingIndicator.style.display = 'none';
+        }
+
+        scrollToBottom() {
+            setTimeout(() => {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }, 100);
+        }
+
+        async sendMessage() {
+            const message = this.messageInput.value.trim();
+            if (!message) return;
+
+            const selectedModel = this.modelSelect.value;
+            
+            this.addMessage(message, true);
+            
+            this.messageInput.value = '';
+            this.messageInput.style.height = 'auto';
+            this.updateSendButton();
+            
+            if (!this.puterAvailable) {
+                this.addErrorMessage('Puter API is not available. Please ensure js.puter.com is accessible and try again.');
+                return;
+            }
+            
+            this.showTypingIndicator();
+            this.sendButton.disabled = true;
+
+            try {
+                console.log(`🚀 Sending to ${selectedModel}:`, message);
+                
+                const response = await puter.ai.chat(message, {
+                    model: selectedModel
+                });
+                
+                console.log(`✅ Raw response from ${selectedModel}:`, response);
+                console.log(`✅ Response type:`, typeof response);
+                console.log(`✅ Response structure:`, JSON.stringify(response, null, 2));
+                console.log(`✅ Response keys:`, Object.keys(response));
+                
+                this.hideTypingIndicator();
+                this.addMessage(response, false, selectedModel);
+                
+            } catch (error) {
+                this.hideTypingIndicator();
+                console.error('❌ Error details:', error);
+                
+                let errorMessage = 'Sorry, there was an error processing your request:\n\n';
+                
+                if (error.message) {
+                    if (error.message.includes('fetch') || error.message.includes('network')) {
+                        errorMessage += 'Network error - please check your connection and try again.';
+                    } else if (error.message.includes('unauthorized') || error.message.includes('403')) {
+                        errorMessage += 'API access denied - this might be due to API key or permission issues.';
+                    } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+                        errorMessage += 'Rate limit exceeded - please wait a moment before trying again.';
+                    } else {
+                        errorMessage += error.message;
+                    }
+                } else {
+                    errorMessage += 'Unknown error occurred. Please try again.';
+                }
+                
+                this.addErrorMessage(errorMessage);
+            } finally {
+                this.sendButton.disabled = false;
+                this.updateSendButton();
+                this.messageInput.focus();
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        new ChatApp();
+    });
+</script>
 </body>
 </html>
