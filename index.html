@@ -249,7 +249,6 @@
             line-height: 1.4;
         }
 
-        /* Scrollbar styling */
         .chat-messages::-webkit-scrollbar {
             width: 6px;
         }
@@ -325,11 +324,10 @@
                 <textarea 
                     id="messageInput" 
                     class="input-field" 
-                    placeholder="Type your message here... (Waiting for Puter API)"
+                    placeholder="Type your message here..."
                     rows="1"
-                    disabled
                 ></textarea>
-                <button id="sendButton" class="send-button" disabled>
+                <button id="sendButton" class="send-button">
                     ➤
                 </button>
             </div>
@@ -359,14 +357,13 @@
                     `This app demonstrates how to integrate with the Puter.com AI API to access both Claude Sonnet 4 and Claude Opus 4 models.\n\n` +
                     `🔄 Status: Checking Puter API availability...\n\n` +
                     `If the Puter API loads successfully, you'll be able to chat with Claude directly. ` +
-                    `Otherwise, this serves as a working template you can use in environments where the API is accessible.`,
+                    `Otherwise, you can still type messages and use this as a template for your own environment.`,
                     false, 
                     'System'
                 );
             }
 
             async checkPuterStatus() {
-                // Give Puter more time to load
                 let attempts = 0;
                 const maxAttempts = 50; // 5 seconds
 
@@ -392,21 +389,14 @@
                 this.statusIndicator.textContent = '✅ Connected to Puter API';
                 this.statusIndicator.className = 'status-indicator connected';
                 
-                this.messageInput.disabled = false;
-                this.messageInput.placeholder = 'Type your message here...';
-                this.updateSendButton();
-                
-                this.addMessage(
+                this.addInfoMessage(
                     `🎉 Great! The Puter API has loaded successfully.\n\n` +
                     `You can now chat with Claude using either:\n` +
                     `• Claude Sonnet 4 (efficient, everyday use)\n` +
                     `• Claude Opus 4 (most capable model)\n\n` +
-                    `Try asking me anything!`,
-                    false, 
-                    'System'
+                    `Try asking me anything!`
                 );
 
-                // Test API availability
                 this.testAPI();
             }
 
@@ -424,7 +414,7 @@
                     `2. Save it as an .html file\n` +
                     `3. Open it from a local web server or hosting service\n` +
                     `4. Ensure js.puter.com is accessible from your network\n\n` +
-                    `The code structure below shows exactly how to integrate with the Puter API:`
+                    `The code structure below shows how to integrate with the Puter API:`
                 );
 
                 this.showImplementationCode();
@@ -432,18 +422,13 @@
 
             async testAPI() {
                 try {
-                    // Test with a simple message
                     const testResponse = await puter.ai.chat("Hello! Just testing the connection.", {
                         model: "claude-sonnet-4"
                     });
                     
                     console.log('✅ API test successful:', testResponse);
                     console.log('✅ Test response type:', typeof testResponse);
-                    
-                    // Show what the response structure looks like
-                    if (typeof testResponse === 'object' && testResponse !== null) {
-                        console.log('Response keys:', Object.keys(testResponse));
-                    }
+                    console.log('Response keys:', Object.keys(testResponse));
                     
                 } catch (error) {
                     console.error('❌ API test failed:', error);
@@ -516,7 +501,7 @@ async function chatWithClaude(message, model = "claude-sonnet-4") {
 
             updateSendButton() {
                 const hasContent = this.messageInput.value.trim().length > 0;
-                this.sendButton.disabled = !hasContent || !this.puterAvailable;
+                this.sendButton.disabled = !hasContent;
             }
 
             addMessage(content, isUser = false, model = null) {
@@ -533,23 +518,36 @@ async function chatWithClaude(message, model = "claude-sonnet-4") {
                     contentDiv.appendChild(badge);
                 }
                 
-                // Handle different content types
-                let textContent = content;
-                if (typeof content === 'object') {
-                    if (content && content.message) {
-                        textContent = content.message;
-                    } else if (content && content.text) {
-                        textContent = content.text;
-                    } else if (content && content.content) {
-                        textContent = content.content;
+                let textContent;
+                try {
+                    if (typeof content === 'string') {
+                        textContent = content;
+                    } else if (content === null || content === undefined) {
+                        textContent = '[No response received]';
+                    } else if (typeof content === 'object') {
+                        if (content.message) {
+                            textContent = content.message;
+                        } else if (content.text) {
+                            textContent = content.text;
+                        } else if (content.content) {
+                            textContent = content.content;
+                        } else {
+                            try {
+                                textContent = JSON.stringify(content, null, 2);
+                            } catch (e) {
+                                textContent = '[Error: Unable to serialize response object]';
+                                console.error('Serialization error:', e, 'Response object:', content);
+                            }
+                        }
                     } else {
-                        textContent = JSON.stringify(content, null, 2);
+                        textContent = String(content);
                     }
-                } else if (content === null || content === undefined) {
-                    textContent = '[No response received]';
+                } catch (e) {
+                    textContent = '[Error processing response]';
+                    console.error('Error in addMessage:', e, 'Original content:', content);
                 }
                 
-                const textNode = document.createTextNode(String(textContent));
+                const textNode = document.createTextNode(textContent);
                 contentDiv.appendChild(textNode);
                 
                 messageDiv.appendChild(contentDiv);
@@ -590,28 +588,23 @@ async function chatWithClaude(message, model = "claude-sonnet-4") {
             }
 
             async sendMessage() {
-                if (!this.puterAvailable) {
-                    this.addErrorMessage('Puter API is not available. Please refresh the page and try again.');
-                    return;
-                }
-
                 const message = this.messageInput.value.trim();
                 if (!message) return;
 
                 const selectedModel = this.modelSelect.value;
                 
-                // Add user message
                 this.addMessage(message, true);
                 
-                // Clear input
                 this.messageInput.value = '';
                 this.messageInput.style.height = 'auto';
                 this.updateSendButton();
                 
-                // Show typing indicator
-                this.showTypingIndicator();
+                if (!this.puterAvailable) {
+                    this.addErrorMessage('Puter API is not available. Please ensure js.puter.com is accessible and try again.');
+                    return;
+                }
                 
-                // Disable send button
+                this.showTypingIndicator();
                 this.sendButton.disabled = true;
 
                 try {
@@ -623,19 +616,10 @@ async function chatWithClaude(message, model = "claude-sonnet-4") {
                     
                     console.log(`✅ Raw response from ${selectedModel}:`, response);
                     console.log(`✅ Response type:`, typeof response);
+                    console.log(`✅ Response structure:`, JSON.stringify(response, null, 2));
                     
                     this.hideTypingIndicator();
-                    
-                    // Handle the response properly
-                    if (typeof response === 'string') {
-                        this.addMessage(response, false, selectedModel);
-                    } else if (response && typeof response === 'object') {
-                        // Log the response structure to understand it better
-                        console.log('Response structure:', Object.keys(response));
-                        this.addMessage(response, false, selectedModel);
-                    } else {
-                        this.addMessage('[Empty or invalid response]', false, selectedModel);
-                    }
+                    this.addMessage(response, false, selectedModel);
                     
                 } catch (error) {
                     this.hideTypingIndicator();
@@ -666,7 +650,6 @@ async function chatWithClaude(message, model = "claude-sonnet-4") {
             }
         }
 
-        // Initialize the chat app when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             new ChatApp();
         });
