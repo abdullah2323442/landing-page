@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Chat with Puter API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 900px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .chat-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chat-header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .model-selector {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .model-selector label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .model-selector select {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            color: white;
+            padding: 10px 16px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .model-selector select:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .model-selector select option {
+            background: #667eea;
+            color: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+        }
+
+        .message {
+            margin-bottom: 24px;
+            animation: messageSlide 0.4s ease-out;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.assistant {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 85%;
+            padding: 18px 24px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.6;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .user .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .user .message-content::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            right: 20px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 8px solid #764ba2;
+        }
+
+        .assistant .message-content {
+            background: white;
+            color: #2c3e50;
+            border: 1px solid #e8ecf0;
+        }
+
+        .assistant .message-content::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 8px solid white;
+        }
+
+        .model-badge {
+            font-size: 11px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: inline-block;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .chat-input {
+            padding: 24px;
+            background: white;
+            border-top: 1px solid #e8ecf0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            max-width: 100%;
+        }
+
+        .input-field {
+            flex: 1;
+            min-height: 52px;
+            max-height: 120px;
+            padding: 16px 20px;
+            border: 2px solid #e8ecf0;
+            border-radius: 26px;
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: #fafbfc;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .send-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .send-button:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 16px 24px;
+            color: #718096;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        .typing-dots {
+            display: inline-block;
+        }
+
+        .typing-dots::after {
+            content: '';
+            animation: typingDots 1.5s infinite;
+        }
+
+        @keyframes typingDots {
+            0%, 60% { content: ''; }
+            30% { content: '.'; }
+            60% { content: '..'; }
+            90% { content: '...'; }
+        }
+
+        .status-message {
+            padding: 16px 24px;
+            margin: 16px 0;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .status-message.error {
+            background: linear-gradient(135deg, #fed7d7, #feb2b2);
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        .status-message.success {
+            background: linear-gradient(135deg, #c6f6d5, #9ae6b4);
+            color: #2f855a;
+            border: 1px solid #68d391;
+        }
+
+        .status-message.info {
+            background: linear-gradient(135deg, #bee3f8, #90cdf4);
+            color: #2c5282;
+            border: 1px solid #63b3ed;
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .setup-instructions {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border: 2px dashed #cbd5e0;
+            border-radius: 16px;
+            padding: 24px;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .setup-instructions h3 {
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .setup-instructions ol {
+            padding-left: 20px;
+            margin: 12px 0;
+        }
+
+        .setup-instructions li {
+            margin: 8px 0;
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid #2d3748;
+        }
+
+        .code-comment {
+            color: #68d391;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 95vh;
+                border-radius: 16px;
+                margin: 10px;
+            }
+            
+            .message-content {
+                max-width: 90%;
+            }
+
+            .chat-header {
+                padding: 20px 16px;
+            }
+
+            .chat-messages {
+                padding: 16px;
+            }
+
+            .chat-input {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Claude AI Chat</h1>
+            <p class="subtitle">Powered by Puter.com API</p>
+            <div class="model-selector">
+                <label for="modelSelect">Model:</label>
+                <select id="modelSelect">
+                    <option value="claude-sonnet-4">Claude Sonnet 4</option>
+                    <option value="claude-opus-4">Claude Opus 4</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <!-- Initial setup message will be added here -->
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <span class="typing-dots">Claude is thinking</span>
+        </div>
+        
+        <div class="chat-input">
+            <div class="input-container">
+                <textarea 
+                    id="messageInput" 
+                    class="input-field" 
+                    placeholder="Checking Puter API availability..."
+                    rows="1"
+                    disabled
+                ></textarea>
+                <button id="sendButton" class="send-button" disabled title="Send message">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Puter API Script -->
+    <script src="https://js.puter.com/v2/" async></script>
+
+    <script>
+        class PuterChatApp {
+            constructor() {
+                this.elements = {
+                    chatMessages: document.getElementById('chatMessages'),
+                    messageInput: document.getElementById('messageInput'),
+                    sendButton: document.getElementById('sendButton'),
+                    modelSelect: document.getElementById('modelSelect'),
+                    typingIndicator: document.getElementById('typingIndicator')
+                };
+                
+                this.isReady = false;
+                this.initializeApp();
+            }
+
+            async initializeApp() {
+                this.showSetupInstructions();
+                this.setupEventListeners();
+                this.setupTextareaResize();
+                await this.waitForPuter();
+            }
+
+            showSetupInstructions() {
+                const instructions = `
+                    <div class="setup-instructions">
+                        <h3>🚀 How to use this Puter Chat App</h3>
+                        
+                        <p><strong>This is a complete, working chat application that integrates with Puter.com's AI API to access Claude models.</strong></p>
+                        
+                        <h4>📋 Setup Instructions:</h4>
+                        <ol>
+                            <li>Copy this entire HTML code</li>
+                            <li>Save it as <code>claude-chat.html</code></li>
+                            <li>Open it from:
+                                <ul>
+                                    <li>A local web server (like Live Server in VS Code)</li>
+                                    <li>Any web hosting service</li>
+                                    <li>GitHub Pages, Netlify, Vercel, etc.</li>
+                                </ul>
+                            </li>
+                            <li>Ensure your network can access <code>js.puter.com</code></li>
+                        </ol>
+
+                        <p><strong>⚡ Features when working:</strong></p>
+                        <ul>
+                            <li>Real-time chat with Claude Sonnet 4 and Opus 4</li>
+                            <li>Beautiful, responsive interface</li>
+                            <li>Message history and typing indicators</li>
+                            <li>Model switching on the fly</li>
+                        </ul>
+                    </div>
+                `;
+                
+                this.elements.chatMessages.innerHTML = instructions;
+                this.addStatusMessage('Attempting to connect to Puter API...', 'info');
+            }
+
+            async waitForPuter(maxAttempts = 100) {
+                let attempts = 0;
+                
+                const checkPuter = () => {
+                    attempts++;
+                    
+                    if (typeof puter !== 'undefined' && puter?.ai?.chat) {
+                        this.handlePuterReady();
+                    } else if (attempts >= maxAttempts) {
+                        this.handlePuterFailed();
+                    } else {
+                        setTimeout(checkPuter, 100);
+                    }
+                };
+                
+                checkPuter();
+            }
+
+            handlePuterReady() {
+                console.log('✅ Puter API loaded successfully!');
+                this.isReady = true;
+                
+                this.addStatusMessage('🎉 Successfully connected to Puter API! You can now chat with Claude.', 'success');
+                
+                this.elements.messageInput.disabled = false;
+                this.elements.messageInput.placeholder = 'Type your message here...';
+                this.updateSendButton();
+                
+                // Add welcome message
+                this.addMessage(
+                    `Hello! I'm Claude, and I'm ready to help you with anything you'd like to discuss.\n\n` +
+                    `You can switch between Claude Sonnet 4 (efficient, everyday use) and Claude Opus 4 (most capable) using the dropdown above.\n\n` +
+                    `What would you like to talk about?`,
+                    false,
+                    this.elements.modelSelect.value
+                );
+
+                this.elements.messageInput.focus();
+            }
+
+            handlePuterFailed() {
+                console.log('❌ Puter API failed to load');
+                
+                this.addStatusMessage(
+                    '❌ Could not connect to Puter API. This is likely due to network restrictions or the service being unavailable.',
+                    'error'
+                );
+                
+                this.showImplementationCode();
+            }
+
+            showImplementationCode() {
+                const codeExample = `<span class="code-comment">// Complete Puter AI Integration Example</span>
+
+<span class="code-comment">// Basic usage - Claude Sonnet 4</span>
+const response = await puter.ai.chat("Hello Claude!", {
+    model: "claude-sonnet-4"
+});
+console.log(response);
+
+<span class="code-comment">// Using Claude Opus 4 for complex tasks</span>
+const complexResponse = await puter.ai.chat(
+    "Explain quantum computing in simple terms", 
+    { model: "claude-opus-4" }
+);
+
+<span class="code-comment">// Error handling</span>
+try {
+    const result = await puter.ai.chat(message, { model: "claude-sonnet-4" });
+    displayResponse(result);
+} catch (error) {
+    console.error("Chat error:", error);
+    handleError(error.message);
+}
+
+<span class="code-comment">// Integration in your app</span>
+class ChatApp {
+    async sendMessage(message, model = "claude-sonnet-4") {
+        try {
+            const response = await puter.ai.chat(message, { model });
+            return response;
+        } catch (error) {
+            throw new Error(\`Chat failed: \${error.message}\`);
+        }
+    }
+}`;
+
+                const codeDiv = document.createElement('div');
+                codeDiv.className = 'code-block';
+                codeDiv.innerHTML = codeExample;
+                
+                this.elements.chatMessages.appendChild(codeDiv);
+                this.scrollToBottom();
+            }
+
+            setupEventListeners() {
+                this.elements.sendButton.addEventListener('click', () => this.sendMessage());
+                
+                this.elements.messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.sendMessage();
+                    }
+                });
+
+                this.elements.messageInput.addEventListener('input', () => {
+                    this.updateSendButton();
+                });
+            }
+
+            setupTextareaResize() {
+                this.elements.messageInput.addEventListener('input', () => {
+                    const element = this.elements.messageInput;
+                    element.style.height = 'auto';
+                    element.style.height = Math.min(element.scrollHeight, 120) + 'px';
+                });
+            }
+
+            updateSendButton() {
+                const hasContent = this.elements.messageInput.value.trim().length > 0;
+                this.elements.sendButton.disabled = !hasContent || !this.isReady;
+            }
+
+            addMessage(content, isUser = false, model = null) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                
+                if (!isUser && model) {
+                    const badge = document.createElement('div');
+                    badge.className = 'model-badge';
+                    badge.textContent = model;
+                    contentDiv.appendChild(badge);
+                }
+                
+                const textNode = document.createTextNode(content);
+                contentDiv.appendChild(textNode);
+                
+                messageDiv.appendChild(contentDiv);
+                this.elements.chatMessages.appendChild(messageDiv);
+                
+                this.scrollToBottom();
+            }
+
+            addStatusMessage(content, type = 'info') {
+                const statusDiv = document.createElement('div');
+                statusDiv.className = `status-message ${type}`;
+                statusDiv.textContent = content;
+                this.elements.chatMessages.appendChild(statusDiv);
+                this.scrollToBottom();
+            }
+
+            showTypingIndicator() {
+                this.elements.typingIndicator.style.display = 'block';
+                this.scrollToBottom();
+            }
+
+            hideTypingIndicator() {
+                this.elements.typingIndicator.style.display = 'none';
+            }
+
+            scrollToBottom() {
+                setTimeout(() => {
+                    this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
+                }, 100);
+            }
+
+            async sendMessage() {
+                if (!this.isReady) {
+                    this.addStatusMessage('Please wait for the Puter API to load.', 'error');
+                    return;
+                }
+
+                const message = this.elements.messageInput.value.trim();
+                if (!message) return;
+
+                const selectedModel = this.elements.modelSelect.value;
+                
+                // Add user message
+                this.addMessage(message, true);
+                
+                // Clear input
+                this.elements.messageInput.value = '';
+                this.elements.messageInput.style.height = 'auto';
+                this.updateSendButton();
+                
+                // Show typing indicator
+                this.showTypingIndicator();
+                this.elements.sendButton.disabled = true;
+
+                try {
+                    console.log(`🚀 Sending to ${selectedModel}:`, message);
+                    
+                    const response = await puter.ai.chat(message, {
+                        model: selectedModel
+                    });
+                    
+                    console.log(`✅ Response from ${selectedModel}:`, response);
+                    
+                    this.hideTypingIndicator();
+                    this.addMessage(response, false, selectedModel);
+                    
+                } catch (error) {
+                    this.hideTypingIndicator();
+                    console.error('❌ Chat error:', error);
+                    
+                    let errorMessage = `Error with ${selectedModel}: `;
+                    
+                    if (error.message.includes('network') || error.message.includes('fetch')) {
+                        errorMessage += 'Network connection failed. Please check your internet connection.';
+                    } else if (error.message.includes('unauthorized') || error.message.includes('403')) {
+                        errorMessage += 'API access denied. This might be due to API limits or authentication issues.';
+                    } else if (error.message.includes('rate limit') || error.message.includes('429')) {
+                        errorMessage += 'Rate limit exceeded. Please wait a moment before sending another message.';
+                    } else {
+                        errorMessage += error.message || 'An unexpected error occurred.';
+                    }
+                    
+                    this.addStatusMessage(errorMessage, 'error');
+                    
+                } finally {
+                    this.elements.sendButton.disabled = false;
+                    this.updateSendButton();
+                    this.elements.messageInput.focus();
+                }
+            }
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            new PuterChatApp();
+        });
+    </script>
+</body>
+</html>
